@@ -220,7 +220,7 @@ int omb_get_screen_height()
 
 int omb_open_framebuffer()
 {
-	if (omb_utils_file_exists(OMB_FB_DEVICE)
+	if (omb_utils_file_exists(OMB_FB_DEVICE))
 	    omb_fb_fd = open(OMB_FB_DEVICE, O_RDWR);
 	else
 	    omb_fb_fd = open(OMB_FB_DEVICE_FAILOVER, O_RDWR);	    
