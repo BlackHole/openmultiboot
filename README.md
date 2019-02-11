@@ -1,3 +1,18 @@
+# SmartMultiBoot - 1.0 (c) 2019 Eddi De Pieri
+
+# Features:
+
+# preserve naming of openmultiboot - existing stick will still boot
+
+# TODO: 
+implement cpio/kexec preparation
+mount -o bind /dev/mmcblk1 /omb/.kernel/current.kernel to protect flash kernel from rewrite
+save blkid to config to continue boot if missing stick (https://stackoverflow.com/questions/6748429/using-libblkid-to-find-uuid-of-a-partition)
+save config to flash
+
+
+This is a fork of OpenMultiboot - For original credits look at https://github.com/oe-alliance/openmultiboot
+
 # OpenMultiBoot - 1.0 2014/10/03#
 
 - OpenMultiBoot will be donated to OE-Alliance by GigaBlue.

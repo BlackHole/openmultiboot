@@ -210,10 +210,6 @@ int main(int argc, char *argv[])
 {
 	int is_rebooting = 0;
 
-	if (argc > 1 && getppid() > 1) {
-		omb_utils_sysvinit(NULL, argv[1]);
-	}
-	else {
 		omb_vumodel[0] = '\0';
 
 		omb_utils_init_system();
@@ -232,9 +228,7 @@ int main(int argc, char *argv[])
 			omb_menu_set_selected(selected);
 			item = omb_menu_get_selected();
 		}
-/*
- * by Meo. load_modules moved !
- */
+
 		omb_utils_prepare_destination(item);
 
 		int lock_menu = omb_utils_check_lock_menu();
@@ -243,16 +237,15 @@ int main(int argc, char *argv[])
 		{
 			omb_log(LOG_DEBUG, "%-33s: preparing environment...", __FUNCTION__);
 			if (!lock_menu) {
-				omb_log(LOG_DEBUG, "%-33s: loading modules...", __FUNCTION__);
-				omb_utils_load_modules(item);
-				if (!omb_utils_file_exists(OMB_VIDEO_DEVICE)) {
-					omb_utils_load_modules_gl(item);
-				}
+//				omb_log(LOG_DEBUG, "%-33s: loading modules...", __FUNCTION__);
+//				omb_utils_load_modules(item);
+//				if (!omb_utils_file_exists(OMB_VIDEO_DEVICE)) {
+//					omb_utils_load_modules_gl(item);
+//				}
 				omb_utils_setrctype();
 			}
 			omb_utils_update_background(item);
-			omb_utils_backup_kernel(item);
-
+//			omb_utils_backup_kernel(item);
 			nextboot = omb_utils_read(OMB_SETTINGS_NEXTBOOT);
 			if (nextboot) {
 				omb_menu_set_selected(nextboot);
@@ -261,7 +254,7 @@ int main(int argc, char *argv[])
 				omb_utils_update_background(item);
 				free(nextboot);
 			}
-			
+		
 			if (!lock_menu) {
 				omb_log(LOG_DEBUG, "%-33s: menu enabled", __FUNCTION__);
 				FILE *fvu = fopen("/proc/stb/info/vumodel", "r");
@@ -282,27 +275,27 @@ int main(int argc, char *argv[])
 			omb_log(LOG_DEBUG, "%-33s: omb_utils_save_int(OMB_SETTINGS_FORCE, 0)", __FUNCTION__);
 			omb_utils_save_int(OMB_SETTINGS_FORCE, 0);
 		}
-
 		item = omb_menu_get_selected();
 		if ((item && selected && strcmp(selected, item->identifier)) != 0 || (item && strstr(item->identifier, "vti") && !force)) {
-			omb_utils_restore_kernel(item);
+			//omb_utils_restore_kernel(item);
 			omb_utils_save(OMB_SETTINGS_SELECTED, item->identifier);
 			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
 			omb_utils_umount(OMB_MAIN_DIR);
-			omb_utils_reboot();
+			smb_utils_initrd_prepare();
+			smb_utils_kexec();
+			//omb_utils_reboot();
 			is_rebooting = 1;
 		}
-		
+	
 		if (!is_rebooting) {
 			if (item != NULL && strcmp(item->identifier, "flash") != 0)
 				omb_utils_remount_media(item);
 			omb_utils_umount(OMB_MAIN_DIR);
-			omb_utils_sysvinit(item, NULL);
+//			omb_utils_sysvinit(item, NULL);
 		}
 
 		if (items) omb_utils_free_items(items);
 		if (selected) free(selected);
-	}
 
 	return OMB_SUCCESS;
 }
