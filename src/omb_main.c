@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
 			omb_utils_umount(OMB_MAIN_DIR);
 			smb_utils_initrd_prepare();
-			smb_utils_kexec();
+			smb_utils_kexec(item);
 			//omb_utils_reboot();
 			is_rebooting = 1;
 		}

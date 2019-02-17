@@ -635,3 +635,94 @@ void omb_utils_sysvinit(omb_device_item *item, const char *args)
 		execl(OMB_CHROOT_BIN, OMB_CHROOT_BIN, path, OMB_INIT_BIN, args, NULL);
 	}
 }
+
+void smb_utils_initrd_prepare()
+{
+/*
+cat <<EOF>initzz
+#!/bin/sh -x
+
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+echo "INITRAMFS"
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+do_mount_fs() {
+        grep -q "\$1" /proc/filesystems || return
+        test -d "\$2" || mkdir -p "\$2"
+        mount -t "\$1" "\$1" "\$2"
+}
+
+do_mknod() {
+        test -e "\$1" || mknod "\$1" "\$2" "\$3" "\$4"
+}
+
+mkdir -p /proc
+mount -t proc proc /proc
+
+do_mount_fs sysfs /sys
+do_mount_fs debugfs /sys/kernel/debug
+do_mount_fs devtmpfs /dev
+#do_mount_fs devpts /dev/pts
+#do_mount_fs tmpfs /dev/shm
+
+mkdir -p /run
+mkdir -p /var/run
+
+do_mknod /dev/console c 5 1
+do_mknod /dev/null c 1 3
+do_mknod /dev/zero c 1 5
+
+while true
+do
+//get the blkid
+//	blkid | sed -n "s/^\([^:]*\):.*UUID=\"*$UUID\"*.*/\\1/p"
+if [[ -n $blkid ]]; then
+	break
+fi
+done
+
+
+sleep 15
+
+mkdir -p /mnt/kexec
+mount $ROOTDEVICE /mnt/kexec
+
+mkdir -p /mnt/target
+mount -o bind /mnt/kexec$ROOTDIR /mnt/target
+
+mount -o bind /sys /mnt/target/sys
+mount -o bind /proc /mnt/target/proc
+mount -o bind /dev /mnt/target/dev
+
+exec switch_root /mnt/target /sbin/init
+*/
+
+	//protect flash kernel
+	sprintf(cmd, "mount -o bind %s/%s/.kernels/%s.bin %s",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
+	"cmd"
+
+
+}
+
+void smb_utils_kexec(omb_device_item *item)
+{
+	char cmd[512];
+	char filename[255];
+
+	if (!item)
+		return;
+	
+	sprintf(filename, "%s/%s/.kernels/%s.bin", OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
+	if (omb_utils_file_exists(filename)) {
+		sprintf(cmd, "/usr/sbin/kexec -d -l %sL --initrd=\"/tmp/kexec_helper.cpio.gz\" --command-line=\"$(cat /proc/cmdline)\"", filename);
+		system(cmd);
+		system("/usr/sbin/kexec -d -e");
+	}
+}

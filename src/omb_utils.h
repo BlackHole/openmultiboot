@@ -66,4 +66,7 @@ void omb_utils_remount_media(omb_device_item *item);
 void omb_utils_reboot();
 void omb_utils_sysvinit(omb_device_item *item, const char *args);
 
+void smb_utils_initrd_prepare();
+void smb_utils_kexec(omb_device_item *item);
+
 #endif // _OMB_UTILS_H_
