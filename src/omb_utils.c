@@ -639,74 +639,80 @@ void omb_utils_sysvinit(omb_device_item *item, const char *args)
 void smb_utils_initrd_prepare()
 {
 /*
-cat <<EOF>initzz
-#!/bin/sh -x
+ROOTDEVICE/UUID and ROOTDIR HAVE TO BE CONFIGURED BY THIS TOOL
+this allow to load the root as soon as the device appear.... 
 
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-echo "INITRAMFS"
-
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-
-do_mount_fs() {
-        grep -q "\$1" /proc/filesystems || return
-        test -d "\$2" || mkdir -p "\$2"
-        mount -t "\$1" "\$1" "\$2"
-}
-
-do_mknod() {
-        test -e "\$1" || mknod "\$1" "\$2" "\$3" "\$4"
-}
-
-mkdir -p /proc
-mount -t proc proc /proc
-
-do_mount_fs sysfs /sys
-do_mount_fs debugfs /sys/kernel/debug
-do_mount_fs devtmpfs /dev
-#do_mount_fs devpts /dev/pts
-#do_mount_fs tmpfs /dev/shm
-
-mkdir -p /run
-mkdir -p /var/run
-
-do_mknod /dev/console c 5 1
-do_mknod /dev/null c 1 3
-do_mknod /dev/zero c 1 5
-
-while true
-do
-//get the blkid
-//	blkid | sed -n "s/^\([^:]*\):.*UUID=\"*$UUID\"*.*/\\1/p"
-if [[ -n $blkid ]]; then
-	break
-fi
-done
-
-
-sleep 15
-
-mkdir -p /mnt/kexec
-mount $ROOTDEVICE /mnt/kexec
-
-mkdir -p /mnt/target
-mount -o bind /mnt/kexec$ROOTDIR /mnt/target
-
-mount -o bind /sys /mnt/target/sys
-mount -o bind /proc /mnt/target/proc
-mount -o bind /dev /mnt/target/dev
-
-exec switch_root /mnt/target /sbin/init
+TODO: if timeout happened we could try to do a failover by remounting flash, removing the default file and reboot 
 */
 
-	//protect flash kernel
-	sprintf(cmd, "mount -o bind %s/%s/.kernels/%s.bin %s",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
-	"cmd"
+	FILE *fp;
+	char tmp[255];
+	char cmd[512];
+
+	sprintf(tmp, "/tmp/init");
+	fp = fopen(tmp,"w");
+	fprintf(fp,"#!/bin/sh -x\n");
+	fprintf(fp,"ROOTDEVICE%s\n");
+	fprintf(fp,"ROOTDIR=%s\n");
+	fprintf(fp,"UUID=%s\n");
+	fprintf(fp,"echo \"SMARTMULTIBOOT: BEGIN INITRAMFS\"\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"PATH=/sbin:/bin:/usr/sbin:/usr/bin\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"do_mount_fs() {\n");
+	fprintf(fp,"        grep -q \"$1\" /proc/filesystems || return\n");
+	fprintf(fp,"        test -d \"$2\" || mkdir -p \"$2\"\n");
+	fprintf(fp,"        mount -t \"$1\" \"$1\" \"$2\"\n");
+	fprintf(fp,"}\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"do_mknod() {\n");
+	fprintf(fp,"        test -e \"$1\" || mknod \"$1\" \"$2\" \"$3\" \"$4\"\n");
+	fprintf(fp,"}\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"mkdir -p /proc\n");
+	fprintf(fp,"mount -t proc proc /proc\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"do_mount_fs sysfs /sys\n");
+	fprintf(fp,"do_mount_fs devtmpfs /dev\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"mkdir -p /run\n");
+	fprintf(fp,"mkdir -p /var/run\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"do_mknod /dev/console c 5 1\n");
+	fprintf(fp,"do_mknod /dev/null c 1 3\n");
+	fprintf(fp,"do_mknod /dev/zero c 1 5\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"blkid\n");
+	fprintf(fp,"echo \"SMARTMULTIBOOT: looking for device $UUID\"\n");
+	fprintf(fp,"while [[ $cnt -lt 30 ]];\n");
+	fprintf(fp,"do\n");
+	fprintf(fp,"	blkid=$(blkid | sed -n \"s/^\\([^:]*\\):.*UUID=\"*$UUID\"*.*\\/\\1/p\")\n");
+	fprintf(fp,"	if [[ -n $blkid ]]; then\n");
+	fprintf(fp,"		break\n");
+	fprintf(fp,"	fi\n");
+	fprintf(fp,"	sleep 1\n");
+	fprintf(fp,"done\n");
+	fprintf(fp,"if [[ -z $blkid ]]; then\n");
+	fprintf(fp,"	echo \"SMARTMULTIBOOT: uuid match failed\"\n");
+	fprintf(fp,"fi\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"mkdir -p /mnt/kexec\n");
+	fprintf(fp,"mount $ROOTDEVICE /mnt/kexec\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"mkdir -p /mnt/target\n");
+	fprintf(fp,"mount -o bind /mnt/kexec$ROOTDIR /mnt/target\n");
+	fprintf(fp,"\n");
+	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
+	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
+	fprintf(fp,"mount -o bind /dev /mnt/target/dev\n");
+	//protect kernel in flash
+//	sprintf(fp,"mount -o bind %s/%s/.kernels/%s.bin %s",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
+	fprintf(fp,"\n");
+	fprintf(fp,"echo \"SMARTMULTIBOOT: END INITRAMFS\"\n");
+	fprintf(fp,"exec switch_root /mnt/target /sbin/init\n");
+	fclose(fp);
+
+	sprintf(cmd, "chmod 0755 /tmp/init");
 
 
 }
