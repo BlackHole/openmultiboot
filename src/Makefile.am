@@ -1,4 +1,4 @@
-open_multiboot_SOURCES = omb_branding.c \
+smart_multiboot_SOURCES = omb_branding.c \
 	omb_framebuffer.c \
 	omb_freetype.c \
 	omb_input.c \
@@ -8,4 +8,4 @@ open_multiboot_SOURCES = omb_branding.c \
 	omb_menu.c \
 	omb_utils.c
 
-sbin_PROGRAMS = open_multiboot
+sbin_PROGRAMS = smart_multiboot
