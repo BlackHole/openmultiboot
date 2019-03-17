@@ -645,16 +645,29 @@ this allow to load the root as soon as the device appear....
 TODO: if timeout happened we could try to do a failover by remounting flash, removing the default file and reboot 
 */
 
+
 	FILE *fp;
 	char tmp[255];
 	char cmd[512];
+
+printf("removing /tmp/kexec_helper\n");
+	sprintf(cmd, "rm -Rf /tmp/kexec_helper");
+	system(cmd);
+printf("creating /tmp/kexec_helper\n");
+	sprintf(cmd, "mkdir /tmp/kexec_helper");
+	system(cmd);
+printf("change dir /tmp/kexec_helper\n");
+	sprintf(cmd, "cd /tmp/kexec_helper");
+	system(cmd);
+
+printf("unpack cpio\n");
+	sprintf(cmd, "gzip -c -d %s/%s/.kernels/openbh-4.2.025.release-vuduo4k.rootfs.cpio.gz | cpio -i --make-directories",OMB_MAIN_DIR, OMB_DATA_DIR);
+	system(cmd);
+
 printf("CREATING INIT FILE\n");
-	sprintf(tmp, "/tmp/init");
+	sprintf(tmp, "/tmp/kexec_helper/init");
 	fp = fopen(tmp,"w");
 	fprintf(fp,"#!/bin/sh -x\n");
-//printf("1\n");
-	fprintf(fp,"ROOTDEVICE%s\n", "/dev/qualcosa");
-	sprintf(tmp, "/dev/qualcosa");
 	fprintf(fp,"ROOTDIR=%s/%s/%s\n",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
 	fprintf(fp,"UUID=%s\n","dummyuuid");
 	fprintf(fp,"echo \"SMARTMULTIBOOT: BEGIN INITRAMFS\"\n");
@@ -688,18 +701,18 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"echo \"SMARTMULTIBOOT: looking for device $UUID\"\n");
 	fprintf(fp,"while [[ $cnt -lt 30 ]];\n");
 	fprintf(fp,"do\n");
-	fprintf(fp,"	blkid=$(blkid | sed -n \"s/^\\([^:]*\\):.*UUID=\"*$UUID\"*.*\\/\\1/p\")\n");
-	fprintf(fp,"	if [[ -n $blkid ]]; then\n");
+	fprintf(fp,"	blkdev=$(blkid | sed -n \"s/^\\([^:]*\\):.*UUID=\\\"*$UUID\\\"*.*/\\1/p\")\n");
+	fprintf(fp,"	if [[ -n $blkdev ]]; then\n");
 	fprintf(fp,"		break\n");
 	fprintf(fp,"	fi\n");
 	fprintf(fp,"	sleep 1\n");
 	fprintf(fp,"done\n");
-	fprintf(fp,"if [[ -z $blkid ]]; then\n");
+	fprintf(fp,"if [[ -z $blkdev ]]; then\n");
 	fprintf(fp,"	echo \"SMARTMULTIBOOT: uuid match failed\"\n");
 	fprintf(fp,"fi\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mkdir -p /mnt/kexec\n");
-	fprintf(fp,"mount $ROOTDEVICE /mnt/kexec\n");
+	fprintf(fp,"mount $blkdev /mnt/kexec\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mkdir -p /mnt/target\n");
 	fprintf(fp,"mount -o bind /mnt/kexec$ROOTDIR /mnt/target\n");
@@ -714,7 +727,13 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"exec switch_root /mnt/target /sbin/init\n");
 	fclose(fp);
 
-	sprintf(cmd, "chmod 0755 /tmp/init");
+printf("chmod /tmp/kexec_helper/init\n");
+	sprintf(cmd, "chmod 0755 /tmp/kexec_helper/init");
+	system(cmd);
+printf("creating /tmp/kexec_helper.cpio.gz\n");
+	sprintf(cmd, "find . | cpio -o -H newc | gzip -f -9 -n -c > /tmp/kexec_helper.cpio.gz");
+	system(cmd);
+printf("end prepare\n");
 
 
 }
