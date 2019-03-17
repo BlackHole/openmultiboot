@@ -636,7 +636,7 @@ void omb_utils_sysvinit(omb_device_item *item, const char *args)
 	}
 }
 
-void smb_utils_initrd_prepare()
+void smb_utils_initrd_prepare(omb_device_item *item)
 {
 /*
 ROOTDEVICE/UUID and ROOTDIR HAVE TO BE CONFIGURED BY THIS TOOL
@@ -652,9 +652,11 @@ TODO: if timeout happened we could try to do a failover by remounting flash, rem
 	sprintf(tmp, "/tmp/init");
 	fp = fopen(tmp,"w");
 	fprintf(fp,"#!/bin/sh -x\n");
-	fprintf(fp,"ROOTDEVICE%s\n");
-	fprintf(fp,"ROOTDIR=%s\n");
-	fprintf(fp,"UUID=%s\n");
+//printf("1\n");
+	fprintf(fp,"ROOTDEVICE%s\n", "/dev/qualcosa");
+	sprintf(tmp, "/dev/qualcosa");
+	fprintf(fp,"ROOTDIR=%s/%s/%s\n",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
+	fprintf(fp,"UUID=%s\n","dummyuuid");
 	fprintf(fp,"echo \"SMARTMULTIBOOT: BEGIN INITRAMFS\"\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"PATH=/sbin:/bin:/usr/sbin:/usr/bin\n");
@@ -727,8 +729,8 @@ void smb_utils_kexec(omb_device_item *item)
 	
 	sprintf(filename, "%s/%s/.kernels/%s.bin", OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
 	if (omb_utils_file_exists(filename)) {
-		sprintf(cmd, "/usr/sbin/kexec -d -l %sL --initrd=\"/tmp/kexec_helper.cpio.gz\" --command-line=\"$(cat /proc/cmdline)\"", filename);
+		sprintf(cmd, "/usr/sbin/kexec -d -l %s --initrd=\"/tmp/kexec_helper.cpio.gz\" --command-line=\"$(cat /proc/cmdline)\"", filename);
 		system(cmd);
-		system("/usr/sbin/kexec -d -e");
+		system("xx/usr/sbin/kexec -d -e");
 	}
 }

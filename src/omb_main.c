@@ -210,6 +210,8 @@ int main(int argc, char *argv[])
 {
 	int is_rebooting = 0;
 
+
+
 		omb_vumodel[0] = '\0';
 
 		omb_utils_init_system();
@@ -281,7 +283,7 @@ int main(int argc, char *argv[])
 			omb_utils_save(OMB_SETTINGS_SELECTED, item->identifier);
 			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
 			omb_utils_umount(OMB_MAIN_DIR);
-			smb_utils_initrd_prepare();
+			smb_utils_initrd_prepare(item);
 			smb_utils_kexec(item);
 			//omb_utils_reboot();
 			is_rebooting = 1;
