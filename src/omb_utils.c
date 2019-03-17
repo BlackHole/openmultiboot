@@ -648,7 +648,7 @@ TODO: if timeout happened we could try to do a failover by remounting flash, rem
 	FILE *fp;
 	char tmp[255];
 	char cmd[512];
-
+printf("CREATING INIT FILE\n");
 	sprintf(tmp, "/tmp/init");
 	fp = fopen(tmp,"w");
 	fprintf(fp,"#!/bin/sh -x\n");
