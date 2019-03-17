@@ -649,6 +649,25 @@ TODO: if timeout happened we could try to do a failover by remounting flash, rem
 	FILE *fp;
 	char tmp[255];
 	char cmd[512];
+	char uuid[255];
+
+// i know better shell then c.. for now we can use shell code
+#get device
+	sprintf(cmd, "sed -n \"s-\([^ ]*\) %s .*-\\1-1p\" /proc/mounts", OMB_MAIN_DIR);
+	fp = popen(cmd, "r");
+	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
+		break;
+	}
+	pclose(fp);
+#
+#get blkid
+	sprintf(cmd, "blkid | sed -n \"s-^/dev/sdb1:.*UUID=\\\"\([^\\\"]*\)\\\" .*-\\1-p\"");
+	fp = popen(cmd, "r");
+	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
+		strcpy(uuid,tmp);
+	}
+	pclose(fp);
+
 
 printf("removing /tmp/kexec_helper\n");
 	sprintf(cmd, "rm -Rf /tmp/kexec_helper");
@@ -656,20 +675,17 @@ printf("removing /tmp/kexec_helper\n");
 printf("creating /tmp/kexec_helper\n");
 	sprintf(cmd, "mkdir /tmp/kexec_helper");
 	system(cmd);
-printf("change dir /tmp/kexec_helper\n");
-	sprintf(cmd, "cd /tmp/kexec_helper");
+printf("change dir /tmp/kexec_helper and unpack cpio\n");
+	sprintf(cmd, "cd /tmp/kexec_helper && gzip -c -d %s/%s/.kernels/openbh-4.2.025.release-vuduo4k.rootfs.cpio.gz | cpio -i --make-directories",OMB_MAIN_DIR, OMB_DATA_DIR);
 	system(cmd);
 
-printf("unpack cpio\n");
-	sprintf(cmd, "gzip -c -d %s/%s/.kernels/openbh-4.2.025.release-vuduo4k.rootfs.cpio.gz | cpio -i --make-directories",OMB_MAIN_DIR, OMB_DATA_DIR);
-	system(cmd);
 
 printf("CREATING INIT FILE\n");
 	sprintf(tmp, "/tmp/kexec_helper/init");
 	fp = fopen(tmp,"w");
 	fprintf(fp,"#!/bin/sh -x\n");
 	fprintf(fp,"ROOTDIR=%s/%s/%s\n",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
-	fprintf(fp,"UUID=%s\n","dummyuuid");
+	fprintf(fp,"UUID=%s\n",uuid);
 	fprintf(fp,"echo \"SMARTMULTIBOOT: BEGIN INITRAMFS\"\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"PATH=/sbin:/bin:/usr/sbin:/usr/bin\n");
@@ -731,7 +747,7 @@ printf("chmod /tmp/kexec_helper/init\n");
 	sprintf(cmd, "chmod 0755 /tmp/kexec_helper/init");
 	system(cmd);
 printf("creating /tmp/kexec_helper.cpio.gz\n");
-	sprintf(cmd, "find . | cpio -o -H newc | gzip -f -9 -n -c > /tmp/kexec_helper.cpio.gz");
+	sprintf(cmd, "cd /tmp/kexec_helper && find . | cpio -o -H newc | gzip -f -9 -n -c > /tmp/kexec_helper.cpio.gz");
 	system(cmd);
 printf("end prepare\n");
 
