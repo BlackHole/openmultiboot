@@ -214,7 +214,8 @@ int main(int argc, char *argv[])
 
 		omb_vumodel[0] = '\0';
 
-		omb_utils_init_system();
+//smartmultiboot doesn't need init...
+//		omb_utils_init_system();
 		omb_device_item *item = NULL;
 		omb_device_item *items = NULL;
 		char *selected = NULL;
@@ -231,11 +232,11 @@ int main(int argc, char *argv[])
 			item = omb_menu_get_selected();
 		}
 
-		omb_utils_prepare_destination(item);
+//		omb_utils_prepare_destination(item);
 
 		int lock_menu = omb_utils_check_lock_menu();
-		int force = omb_utils_read_int(OMB_SETTINGS_FORCE);
-		if (!force && items) 
+//		int force = omb_utils_read_int(OMB_SETTINGS_FORCE);
+		if (/*!force && */ items) 
 		{
 			omb_log(LOG_DEBUG, "%-33s: preparing environment...", __FUNCTION__);
 			if (!lock_menu) {
@@ -273,28 +274,32 @@ int main(int argc, char *argv[])
 				omb_log(LOG_DEBUG, "%-33s: menu disabled", __FUNCTION__);
 			}
 		}
-		else {
+/*		else {
 			omb_log(LOG_DEBUG, "%-33s: omb_utils_save_int(OMB_SETTINGS_FORCE, 0)", __FUNCTION__);
 			omb_utils_save_int(OMB_SETTINGS_FORCE, 0);
-		}
+		}*/
 		item = omb_menu_get_selected();
-		if ((item && selected && strcmp(selected, item->identifier)) != 0 || (item && strstr(item->identifier, "vti") && !force)) {
+		printf("SELECTED=%s\n",selected);
+		printf("item->identifier=%s\n",item->identifier);
+//		if ((item && selected && strcmp(selected, item->identifier)) != 0 || (item && strstr(item->identifier, "vti") /*&& !force*/)) {
+		if ((item && selected && strcmp(item->identifier, "flash")) != 0 || (item && strstr(item->identifier, "vti") /*&& !force*/)) {
 			//omb_utils_restore_kernel(item);
 			omb_utils_save(OMB_SETTINGS_SELECTED, item->identifier);
-			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
-			omb_utils_umount(OMB_MAIN_DIR);
+//			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
 			smb_utils_initrd_prepare(item);
+//maybe this should be remount-ro
+//			omb_utils_umount(OMB_MAIN_DIR);
 			smb_utils_kexec(item);
 			//omb_utils_reboot();
 			is_rebooting = 1;
 		}
 	
-		if (!is_rebooting) {
-			if (item != NULL && strcmp(item->identifier, "flash") != 0)
-				omb_utils_remount_media(item);
-			omb_utils_umount(OMB_MAIN_DIR);
+//		if (!is_rebooting) {
+//			if (item != NULL && strcmp(item->identifier, "flash") != 0)
+//				omb_utils_remount_media(item);
+//			omb_utils_umount(OMB_MAIN_DIR);
 //			omb_utils_sysvinit(item, NULL);
-		}
+//		}
 
 		if (items) omb_utils_free_items(items);
 		if (selected) free(selected);

@@ -652,20 +652,25 @@ TODO: if timeout happened we could try to do a failover by remounting flash, rem
 	char uuid[255];
 
 // i know better shell then c.. for now we can use shell code
-#get device
-	sprintf(cmd, "sed -n \"s-\([^ ]*\) %s .*-\\1-1p\" /proc/mounts", OMB_MAIN_DIR);
+//get device
+	sprintf(cmd, "sed -n \"s-\\\([^ ]*\\) %s .*-\\1-1p\" /proc/mounts", OMB_MAIN_DIR);
 	fp = popen(cmd, "r");
+printf("CMD=%s\n",cmd);
 	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
 		break;
 	}
+printf("DEVICE=%s\n",tmp);
 	pclose(fp);
-#
-#get blkid
-	sprintf(cmd, "blkid | sed -n \"s-^/dev/sdb1:.*UUID=\\\"\([^\\\"]*\)\\\" .*-\\1-p\"");
+
+//get blkid
+	sprintf(cmd, "blkid | sed -n \"s-^/dev/sdb1:.*UUID=\\\"\\\([^\\\"]*\\\)\\\" .*-\\1-p\"");
+printf("CMD=%s\n",cmd);
+
 	fp = popen(cmd, "r");
 	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
 		strcpy(uuid,tmp);
 	}
+printf("UUID=%s\n",uuid);
 	pclose(fp);
 
 
@@ -684,7 +689,7 @@ printf("CREATING INIT FILE\n");
 	sprintf(tmp, "/tmp/kexec_helper/init");
 	fp = fopen(tmp,"w");
 	fprintf(fp,"#!/bin/sh -x\n");
-	fprintf(fp,"ROOTDIR=%s/%s/%s\n",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
+	fprintf(fp,"ROOTDIR=/%s/%s\n",OMB_DATA_DIR, item->identifier);
 	fprintf(fp,"UUID=%s\n",uuid);
 	fprintf(fp,"echo \"SMARTMULTIBOOT: BEGIN INITRAMFS\"\n");
 	fprintf(fp,"\n");
@@ -715,23 +720,26 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"blkid\n");
 	fprintf(fp,"echo \"SMARTMULTIBOOT: looking for device $UUID\"\n");
+	fprintf(fp,"cnt=0\n");
 	fprintf(fp,"while [[ $cnt -lt 30 ]];\n");
 	fprintf(fp,"do\n");
 	fprintf(fp,"	blkdev=$(blkid | sed -n \"s/^\\([^:]*\\):.*UUID=\\\"*$UUID\\\"*.*/\\1/p\")\n");
-	fprintf(fp,"	if [[ -n $blkdev ]]; then\n");
+	fprintf(fp,"	if [[ \"x$blkdev\" != \"x\" ]]; then\n");
 	fprintf(fp,"		break\n");
 	fprintf(fp,"	fi\n");
 	fprintf(fp,"	sleep 1\n");
+	fprintf(fp,"	let cnt=cnt+1\n");
 	fprintf(fp,"done\n");
-	fprintf(fp,"if [[ -z $blkdev ]]; then\n");
+	fprintf(fp,"if [[ \"x$blkdev\" = \"x\" ]]; then\n");
 	fprintf(fp,"	echo \"SMARTMULTIBOOT: uuid match failed\"\n");
 	fprintf(fp,"fi\n");
 	fprintf(fp,"\n");
+	fprintf(fp,"sleep 1\n");
 	fprintf(fp,"mkdir -p /mnt/kexec\n");
 	fprintf(fp,"mount $blkdev /mnt/kexec\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mkdir -p /mnt/target\n");
-	fprintf(fp,"mount -o bind /mnt/kexec$ROOTDIR /mnt/target\n");
+	fprintf(fp,"mount -o bind /mnt/kexec$ROOTDIR /mnt/target || echo \"error mounting $ROOTDIR\"\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
 	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
@@ -747,7 +755,7 @@ printf("chmod /tmp/kexec_helper/init\n");
 	sprintf(cmd, "chmod 0755 /tmp/kexec_helper/init");
 	system(cmd);
 printf("creating /tmp/kexec_helper.cpio.gz\n");
-	sprintf(cmd, "cd /tmp/kexec_helper && find . | cpio -o -H newc | gzip -f -9 -n -c > /tmp/kexec_helper.cpio.gz");
+	sprintf(cmd, "cd /tmp/kexec_helper && find . | cpio -o -H newc | gzip -f -9 -n -c > /tmp/kexec_helper.cpio.gz && sync && sync && sync");
 	system(cmd);
 printf("end prepare\n");
 
@@ -765,6 +773,7 @@ void smb_utils_kexec(omb_device_item *item)
 	sprintf(filename, "%s/%s/.kernels/%s.bin", OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier);
 	if (omb_utils_file_exists(filename)) {
 		sprintf(cmd, "/usr/sbin/kexec -d -l %s --initrd=\"/tmp/kexec_helper.cpio.gz\" --command-line=\"$(cat /proc/cmdline)\"", filename);
+		printf("%s\n",cmd);
 		system(cmd);
 		system("xx/usr/sbin/kexec -d -e");
 	}
