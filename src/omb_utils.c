@@ -744,9 +744,9 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
 	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
 	fprintf(fp,"mount -o bind /dev /mnt/target/dev\n");
-	//protect kernel in flash
-//	sprintf(fp,"mount -o bind %s/%s/.kernels/%s.bin %s",OMB_MAIN_DIR, OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
 	fprintf(fp,"\n");
+	//protect kernel in flash
+	fprintf(fp,"mount -o bind /mnt/kexec/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
 	fprintf(fp,"echo \"SMARTMULTIBOOT: END INITRAMFS\"\n");
 	fprintf(fp,"exec switch_root /mnt/target /sbin/init\n");
 	fclose(fp);
