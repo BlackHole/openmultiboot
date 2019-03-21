@@ -744,6 +744,7 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
 	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
 	fprintf(fp,"mount -o bind /dev /mnt/target/dev\n");
+	fprintf(fp,"mkdir -p /mnt/target/mnt/kexec\n");
 	fprintf(fp,"\n");
 	//protect kernel in flash
 	fprintf(fp,"mount -o bind /mnt/kexec/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
