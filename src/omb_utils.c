@@ -735,19 +735,19 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"fi\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"sleep 1\n");
-	fprintf(fp,"mkdir -p /mnt/kexec\n");
-	fprintf(fp,"mount $blkdev /mnt/kexec\n");
+	fprintf(fp,"mkdir -p /smartmultiboot\n");
+	fprintf(fp,"mount $blkdev /smartmultiboot\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mkdir -p /mnt/target\n");
-	fprintf(fp,"mount -o bind /mnt/kexec$ROOTDIR /mnt/target || echo \"error mounting $ROOTDIR\"\n");
+	fprintf(fp,"mount -o bind /smartmultiboot$ROOTDIR /mnt/target || echo \"error mounting $ROOTDIR\"\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
 	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
 	fprintf(fp,"mount -o bind /dev /mnt/target/dev\n");
-	fprintf(fp,"mkdir -p /mnt/target/mnt/kexec\n");
+	fprintf(fp,"mkdir -p /mnt/target/smartmultiboot\n");
 	fprintf(fp,"\n");
 	//protect kernel in flash
-	fprintf(fp,"mount -o bind /mnt/kexec/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
+	fprintf(fp,"mount -o bind /smartmultiboot/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
 	fprintf(fp,"echo \"SMARTMULTIBOOT: END INITRAMFS\"\n");
 	fprintf(fp,"exec switch_root /mnt/target /sbin/init\n");
 	fclose(fp);
@@ -776,6 +776,6 @@ void smb_utils_kexec(omb_device_item *item)
 		sprintf(cmd, "/usr/sbin/kexec -d -l %s --initrd=\"/tmp/kexec_helper.cpio.gz\" --command-line=\"$(cat /proc/cmdline)\"", filename);
 		printf("%s\n",cmd);
 		system(cmd);
-		system("xx/usr/sbin/kexec -d -e");
+		system("/usr/sbin/kexec -d -e");
 	}
 }
