@@ -681,7 +681,7 @@ printf("creating /tmp/kexec_helper\n");
 	sprintf(cmd, "mkdir /tmp/kexec_helper");
 	system(cmd);
 printf("change dir /tmp/kexec_helper and unpack cpio\n");
-	sprintf(cmd, "cd /tmp/kexec_helper && gzip -c -d %s/%s/.kernels/openbh-4.2.025.release-vuduo4k.rootfs.cpio.gz | cpio -i --make-directories",OMB_MAIN_DIR, OMB_DATA_DIR);
+	sprintf(cmd, "cd /tmp/kexec_helper && gzip -c -d %s | cpio -i --make-directories", "/usr/share/smartmultiboot/initramfs.cpio.gz");
 	system(cmd);
 
 
