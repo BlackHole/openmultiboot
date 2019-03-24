@@ -663,7 +663,7 @@ printf("DEVICE=%s\n",tmp);
 	pclose(fp);
 
 //get blkid
-	sprintf(cmd, "blkid | sed -n \"s-^/dev/sdb1:.*UUID=\\\"\\\([^\\\"]*\\\)\\\" .*-\\1-p\"");
+	sprintf(cmd, "blkid | sed -n \"s-^%s:.*UUID=\\\"\\\([^\\\"]*\\\)\\\" .*-\\1-p\"", tmp);
 printf("CMD=%s\n",cmd);
 
 	fp = popen(cmd, "r");
