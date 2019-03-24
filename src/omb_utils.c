@@ -659,6 +659,7 @@ printf("CMD=%s\n",cmd);
 	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
 		break;
 	}
+	tmp[strcspn(tmp, "\n")] = 0;
 printf("DEVICE=%s\n",tmp);
 	pclose(fp);
 
@@ -670,6 +671,7 @@ printf("CMD=%s\n",cmd);
 	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
 		strcpy(uuid,tmp);
 	}
+	uuid[strcspn(uuid, "\n")] = 0;
 printf("UUID=%s\n",uuid);
 	pclose(fp);
 
