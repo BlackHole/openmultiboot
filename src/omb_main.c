@@ -43,8 +43,10 @@ char omb_vumodel[63];
 
 void omb_draw_header()
 {
+	int offset_x = 0;
 	char tmp[255];
 	sprintf(tmp, "%s %s", OMB_DISPLAY_NAME, OMB_APP_VERION);
+	if (! strcmp(omb_vumodel,"")) {
 	omb_render_symbol(OMB_SYMBOL_LOGO,
 		OMB_HEADER_X,
 		OMB_HEADER_Y - 25,
@@ -52,9 +54,13 @@ void omb_draw_header()
 		OMB_HEADER_COLOR,
 		OMB_HEADER_FONT_SIZE,
 		OMB_TEXT_ALIGN_LEFT);
-	
+		offset_x = 45;
+	} else {
+		sprintf(tmp, "VU+ %s %s", OMB_DISPLAY_NAME, OMB_APP_VERION);
+	}
+
 	omb_render_text(tmp,
-		OMB_HEADER_X + 45,
+		OMB_HEADER_X + offset_x,
 		OMB_HEADER_Y,
 		400,
 		OMB_HEADER_COLOR,
@@ -281,10 +287,10 @@ int main(int argc, char *argv[])
 		item = omb_menu_get_selected();
 		printf("SELECTED=%s\n",selected);
 		printf("item->identifier=%s\n",item->identifier);
+		omb_utils_save(OMB_SETTINGS_SELECTED, item->identifier);
 //		if ((item && selected && strcmp(selected, item->identifier)) != 0 || (item && strstr(item->identifier, "vti") /*&& !force*/)) {
 		if ((item && selected && strcmp(item->identifier, "flash")) != 0 || (item && strstr(item->identifier, "vti") /*&& !force*/)) {
 			//omb_utils_restore_kernel(item);
-			omb_utils_save(OMB_SETTINGS_SELECTED, item->identifier);
 //			omb_utils_save_int(OMB_SETTINGS_FORCE, 1);
 			smb_utils_initrd_prepare(item);
 //maybe this should be remount-ro

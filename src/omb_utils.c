@@ -650,6 +650,26 @@ TODO: if timeout happened we could try to do a failover by remounting flash, rem
 	char tmp[255];
 	char cmd[512];
 	char uuid[255];
+	char rootdev[255]; //keep it dynamic so the executable is more portable
+	char kerneldev[255]; //keep it dynamic so the executable is more portable
+
+	sprintf(cmd, "python /usr/lib/enigma2/python/Plugins/Extensions/OpenMultiboot/open-multiboot-branding-helper.py /usr/lib/enigma2/python/ machine_mtd_root");
+	fp = popen(cmd, "r");
+	while (fgets(rootdev, sizeof(rootdev)-1, fp) != NULL) {
+		break;
+	}
+	rootdev[strcspn(rootdev, "\n")] = 0;
+printf("ROOTDEV=%s\n",rootdev);
+	pclose(fp);
+
+	sprintf(cmd, "python /usr/lib/enigma2/python/Plugins/Extensions/OpenMultiboot/open-multiboot-branding-helper.py /usr/lib/enigma2/python/ machine_mtd_kernel");
+	fp = popen(cmd, "r");
+	while (fgets(kerneldev, sizeof(kerneldev)-1, fp) != NULL) {
+		break;
+	}
+	kerneldev[strcspn(kerneldev, "\n")] = 0;
+printf("KERNELDEV=%s\n",kerneldev);
+	pclose(fp);
 
 // i know better shell then c.. for now we can use shell code
 //get device
@@ -665,7 +685,7 @@ printf("DEVICE=%s\n",tmp);
 
 //get blkid
 	sprintf(cmd, "blkid | sed -n \"s-^%s:.*UUID=\\\"\\\([^\\\"]*\\\)\\\" .*-\\1-p\"", tmp);
-printf("CMD=%s\n",cmd);
+//printf("CMD=%s\n",cmd);
 
 	fp = popen(cmd, "r");
 	while (fgets(tmp, sizeof(tmp)-1, fp) != NULL) {
@@ -737,21 +757,34 @@ printf("CREATING INIT FILE\n");
 	fprintf(fp,"fi\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"sleep 1\n");
-	fprintf(fp,"mkdir -p /smartmultiboot\n");
-	fprintf(fp,"mount $blkdev /smartmultiboot\n");
+	fprintf(fp,"mkdir -p /omb\n");
+	fprintf(fp,"mount $blkdev /omb\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mkdir -p /mnt/target\n");
-	fprintf(fp,"mount -o bind /smartmultiboot$ROOTDIR /mnt/target || echo \"error mounting $ROOTDIR\"\n");
+	fprintf(fp,"mount -o bind /omb$ROOTDIR /mnt/target || echo \"error mounting $ROOTDIR\"\n");
 	fprintf(fp,"\n");
 	fprintf(fp,"mount -o bind /sys /mnt/target/sys\n");
 	fprintf(fp,"mount -o bind /proc /mnt/target/proc\n");
 	fprintf(fp,"mount -o bind /dev /mnt/target/dev\n");
-	fprintf(fp,"mkdir -p /mnt/target/smartmultiboot\n");
+	fprintf(fp,"mkdir -p /mnt/target/omb\n");
+	fprintf(fp,"mount -o bind /omb /mnt/target/omb\n");
+
+//mount flash in /media/flash on target - needed later to mount the plugin
+	fprintf(fp,"mkdir -p /mnt/target/omb_media/flash\n");
+	fprintf(fp,"mount -o ro,defaults /dev/%s /mnt/target/omb_media/flash\n", rootdev);
+
+	fprintf(fp,"mkdir -p /mnt/target/omb\n");
 	fprintf(fp,"\n");
 	//protect kernel in flash
-	fprintf(fp,"mount -o bind /smartmultiboot/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
+//	fprintf(fp,"mount -o bind /omb/%s/.kernels/%s.bin /mnt/target/%s\n", OMB_DATA_DIR, item->identifier, OMB_KERNEL_MTD);
+	fprintf(fp,"mount -o bind /omb/%s/.kernels/%s.bin /mnt/target/dev/%s\n", OMB_DATA_DIR, item->identifier, kerneldev);
+
+	fprintf(fp,"mkdir -p /mnt/target%s\n", OMB_PLUGIN_DIR);
+	fprintf(fp,"mount -o bind /mnt/target/omb_media/flash%s /mnt/target%s\n", OMB_PLUGIN_DIR, OMB_PLUGIN_DIR);
+
 	fprintf(fp,"echo \"SMARTMULTIBOOT: END INITRAMFS\"\n");
 	fprintf(fp,"exec switch_root /mnt/target /sbin/init\n");
+	//fprintf(fp,"exec switch_root /mnt/target /bin/sh\n");
 	fclose(fp);
 
 printf("chmod /tmp/kexec_helper/init\n");
