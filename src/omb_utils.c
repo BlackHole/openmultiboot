@@ -240,9 +240,12 @@ void omb_utils_free_items(omb_device_item *items)
 void omb_utils_update_background(omb_device_item *item)
 {
 	char tmp[255];
-        sprintf(tmp, "%s %s/usr/share/bootlogo.mvi", OMB_SHOWIFRAME_BIN, item->directory);
-	if (! omb_utils_file_exists(tmp))
-	    sprintf(tmp, "/usr/share/smartmultiboot/missing-background.mvi");
+        sprintf(tmp, "%s/usr/share/bootlogo.mvi", item->directory);
+	if (omb_utils_file_exists(tmp)) {
+            sprintf(tmp, "%s %s/usr/share/bootlogo.mvi", OMB_SHOWIFRAME_BIN, item->directory);
+	} else {
+	    sprintf(tmp, "%s /usr/share/smartmultiboot/missing-background.mvi", OMB_SHOWIFRAME_BIN);
+	}
 	system(tmp);
 }
 
